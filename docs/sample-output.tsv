@@ -1,0 +1,8 @@
+# 2 files, 15 listeners, 7 findings
+high	LS001	web01:23/tcp	telnet (cleartext or legacy remote access, process telnetd) on every interface
+high	LS002	web01:2375/tcp	docker api (data store or control API without authentication by default, process dockerd) on every interface
+high	LS002	db01:6379/tcp	redis (data store or control API without authentication by default, process redis-server) on 10.0.0.15
+high	LS002	db01:11211/tcp	memcached (data store or control API without authentication by default, process memcached) on every interface
+medium	LS003	db01:3306/tcp	mysql (remote administration or database on a network interface, process mysqld) on every interface
+low	LS004	web01:161/udp	snmp (infrastructure service that rarely needs to face the network, process snmpd) on every interface
+low	LS004	db01:111/udp	rpcbind (infrastructure service that rarely needs to face the network, process rpcbind) on every interface

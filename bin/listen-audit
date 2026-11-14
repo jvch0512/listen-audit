@@ -1,0 +1,45 @@
+#!/bin/sh
+# listen-audit: wrapper around src/listen_audit.awk
+D=$(cd "$(dirname "$0")/.." && pwd)
+usage() { echo "usage: listen-audit FILE... | - [--tsv] [--fail-on high|medium]" >&2; echo "Exit: 0 ok, 1 findings at or above --fail-on, 2 bad input." >&2; exit 2; }
+tsv=0; fail=""; files=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --tsv) tsv=1 ;;
+    --fail-on) shift; case "${1:-}" in high|medium) fail="$1" ;; *) usage ;; esac ;;
+    -) files="$files -" ;;
+    -*) usage ;;
+    *) files="$files $1" ;;
+  esac
+  shift
+done
+[ -n "$files" ] || usage
+AWK=${AWK:-awk}
+tmp=$(mktemp) || exit 2
+trap 'rm -f "$tmp"' EXIT
+nfiles=0; nlisten=0
+for f in $files; do
+  if [ "$f" = "-" ]; then label=stdin; src=/dev/stdin
+  else
+    [ -r "$f" ] || { echo "error: cannot read $f" >&2; exit 2; }
+    label=$(basename "$f"); label=${label%.*}; src=$f
+  fi
+  nfiles=$((nfiles+1))
+  $AWK -v HOST="$label" -f "$D/src/listen_audit.awk" "$src" >> "$tmp"
+done
+nlisten=$(awk -F'\t' '$2=="summary"{split($5,a," "); s+=a[1]} END{print s+0}' "$tmp")
+rows=$(awk -F'\t' '$2!="summary"' "$tmp" | sort -t "$(printf '\t')" -s -k1,1n)
+nfind=$(printf '%s\n' "$rows" | awk 'NF{c++} END{print c+0}')
+if [ "$tsv" = 1 ]; then
+  echo "# $nfiles files, $nlisten listeners, $nfind findings"
+  [ -n "$rows" ] && printf '%s\n' "$rows" | awk -F'\t' '{printf "%s\t%s\t%s\t%s\n", $2, $3, $4, $5}'
+else
+  echo "$nfiles files, $nlisten listeners, $nfind findings"
+  [ -n "$rows" ] && printf '%s\n' "$rows" | awk -F'\t' '{printf "%-7s %s %s\n        %s\n", toupper($2), $3, $4, $5}'
+fi
+code=0
+case "$fail" in
+  high) printf '%s\n' "$rows" | awk -F'\t' '$2=="high"{f=1} END{exit f?0:1}' && code=1 ;;
+  medium) printf '%s\n' "$rows" | awk -F'\t' '$2=="high"||$2=="medium"{f=1} END{exit f?0:1}' && code=1 ;;
+esac
+exit $code

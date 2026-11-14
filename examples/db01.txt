@@ -1,0 +1,8 @@
+Active Internet connections (only servers)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name
+tcp        0      0 0.0.0.0:3306            0.0.0.0:*               LISTEN      1450/mysqld
+tcp        0      0 10.0.0.15:6379          0.0.0.0:*               LISTEN      1502/redis-server
+tcp        0      0 127.0.0.1:631           0.0.0.0:*               LISTEN      990/cupsd
+tcp6       0      0 :::22                   :::*                    LISTEN      702/sshd
+tcp6       0      0 :::11211                :::*                    LISTEN      1610/memcached
+udp        0      0 0.0.0.0:111             0.0.0.0:*                           455/rpcbind

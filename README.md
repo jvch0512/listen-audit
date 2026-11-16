@@ -2,6 +2,8 @@
 
 listen-audit reads a saved `ss -tulpn` or `netstat -tulpn` listing and tells you which services are reachable from outside the host and should not be: telnet, FTP, unauthenticated data stores, the Docker API, remote desktop, databases on every interface. Services bound to loopback are treated as safe. It is a short AWK program, so it runs on any Linux box, jump host or incident-response laptop without installing anything.
 
+![Terminal demo of listen-audit on its sample data](docs/demo.svg)
+
 **Live demo:** https://jvch0512.github.io/listen-audit/ (Synthetic ss and netstat listings from two invented hosts.)
 
 POSIX awk (works with gawk and mawk) plus a small sh wrapper. The demo page is rendered from the tool's `--tsv` output by `scripts/site.py` (Python 3, only needed to regenerate the page).
@@ -46,3 +48,13 @@ make test    # runs the suite under every awk found (gawk, mawk)
 ```
 
 MIT.
+
+## Code scanning (SARIF)
+
+`scripts/tsv2sarif.py` converts the `--tsv` output into SARIF 2.1.0, so findings show up in GitHub code scanning:
+
+```sh
+./bin/listen-audit examples/web01.txt examples/db01.txt --tsv | python3 scripts/tsv2sarif.py --tool listen-audit --prefix examples > results.sarif
+```
+
+Upload `results.sarif` with `github/codeql-action/upload-sarif`. Severities map to SARIF levels (critical and high to error, medium to warning, low and info to note) and to a `security-severity` score.
